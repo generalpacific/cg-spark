@@ -8,7 +8,7 @@ Spark.
  * Setup Spark.
 
 ## Building
- * mvn install
+ * ```mvn install```
 
 ## Running CG\_Spark
 ```
