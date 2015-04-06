@@ -12,5 +12,8 @@ Spark.
 
 ## Running CG\_Spark
 ```
-bin/spark-submit --class edu.umn.cs.cgspark.operations.Skyline --master local[4] --driver-class-path /Users/prashantchaudhary/Documents/workspace/cgspark/target/cgspark-0.0.1-SNAPSHOT.jar /Users/prashantchaudhary/Documents/workspace/cgspark/target/cgspark-0.0.1-SNAPSHOT.jar
+bin/spark-submit --class edu.umn.cs.cgspark.operations.Skyline --master local[4] \ 
+--driver-class-path /Users/prashantchaudhary/Documents/workspace/cgspark/target/cgspark-0.0.1-SNAPSHOT.jar \ 
+/Users/prashantchaudhary/Documents/workspace/cgspark/target/cgspark-0.0.1-SNAPSHOT.jar \
+input file
 ```
