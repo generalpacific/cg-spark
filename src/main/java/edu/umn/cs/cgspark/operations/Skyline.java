@@ -35,13 +35,13 @@ public class Skyline {
     Point[] skyline1 = skyline(points, start, mid);
     Point[] skyline2 = skyline(points, mid, end);
     // Merge the two skylines
-    int cut_point = 0;
-    while (cut_point < skyline1.length
-        && !skylineDominate(skyline2[0], skyline1[cut_point]))
-      cut_point++;
-    Point[] result = new Point[cut_point + skyline2.length];
-    System.arraycopy(skyline1, 0, result, 0, cut_point);
-    System.arraycopy(skyline2, 0, result, cut_point, skyline2.length);
+    int cutPointForSkyline1 = 0;
+    while (cutPointForSkyline1 < skyline1.length
+        && !skylineDominate(skyline2[0], skyline1[cutPointForSkyline1]))
+      cutPointForSkyline1++;
+    Point[] result = new Point[cutPointForSkyline1 + skyline2.length];
+    System.arraycopy(skyline1, 0, result, 0, cutPointForSkyline1);
+    System.arraycopy(skyline2, 0, result, cutPointForSkyline1, skyline2.length);
     return result;
   }
 
@@ -53,15 +53,17 @@ public class Skyline {
   }
 
   public static void main(String[] args) throws IOException {
-    String inputFile =
-        "/Users/prashantchaudhary/Documents/workspace/cgspark/input.txt";
+    if (args.length != 1) {
+      printUsage();
+      System.exit(-1);
+    }
+    String inputFile = args[0];
     SparkConf conf = new SparkConf().setAppName("Skyline Application");
     JavaSparkContext sc = new JavaSparkContext(conf);
     JavaRDD<String> inputData = sc.textFile(inputFile);
     JavaRDD<Point> pointsData = inputData.map(new StringToPointMapper());
 
     List<Point> pointsList = pointsData.toArray();
-    System.out.println("Read points: " + pointsList);
 
     // Sort points
     pointsData =
@@ -78,5 +80,9 @@ public class Skyline {
         "/Users/prashantchaudhary/Documents/workspace/cgspark/output.txt");
     System.out.println("DONE Saving skylineRDD to output.txt");
     sc.close();
+  }
+
+  private static void printUsage() {
+    System.out.println("Please provide the input file.");
   }
 }
