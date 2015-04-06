@@ -11,6 +11,9 @@ Spark.
  * ```mvn install```
 
 ## Running CG\_Spark
+ 
+ * Skyline
+
 ```
 bin/spark-submit --class edu.umn.cs.cgspark.operations.Skyline --master local[4] \ 
 --driver-class-path /Users/prashantchaudhary/Documents/workspace/cgspark/target/cgspark-0.0.1-SNAPSHOT.jar \ 
