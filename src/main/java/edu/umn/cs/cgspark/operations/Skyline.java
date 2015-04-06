@@ -1,5 +1,8 @@
 package edu.umn.cs.cgspark.operations;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
@@ -9,6 +12,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import edu.umn.cs.cgspark.core.Point;
 import edu.umn.cs.cgspark.function.PointToXCoordinateMapper;
 import edu.umn.cs.cgspark.function.StringToPointMapper;
+import edu.umn.cs.cgspark.util.FileIOUtil;
 
 /**
  * Operator for calculating the skyline of given points.
@@ -48,7 +52,7 @@ public class Skyline {
     return p1.x() >= p2.x() && p1.y() >= p2.y();
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     String inputFile =
         "/Users/prashantchaudhary/Documents/workspace/cgspark/input.txt";
     SparkConf conf = new SparkConf().setAppName("Skyline Application");
@@ -62,7 +66,6 @@ public class Skyline {
     // Sort points
     pointsData =
         pointsData.sortBy(new PointToXCoordinateMapper(), true, 1).cache();
-    System.out.println("sorted points: " + pointsList);
 
     pointsList = pointsData.toArray();
     Point[] pointsArray = new Point[pointsList.size()];
@@ -70,12 +73,10 @@ public class Skyline {
 
     // calculate skyline.
     Point[] skyline = skyline(pointsArray, 0, pointsArray.length);
-    System.out.println("Skyline: ");
-    for (Point p : skyline) {
-      System.out.print(p + " ");
-    }
-    System.out.println();
-
+    System.out.println("Saving skylineRDD to output.txt");
+    FileIOUtil.writePointArrayToFile(skyline,
+        "/Users/prashantchaudhary/Documents/workspace/cgspark/output.txt");
+    System.out.println("DONE Saving skylineRDD to output.txt");
     sc.close();
   }
 }
