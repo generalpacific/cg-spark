@@ -1,8 +1,6 @@
 package edu.umn.cs.cgspark.input;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 import edu.umn.cs.cgspark.core.Point;
@@ -26,17 +24,35 @@ public final class InputCreator {
 
     System.out.println("Creating the input for size : " + size);
     Random r = new Random();
-    Point[] points = new Point[size];
-    for (int i = 0; i < size; ++i) {
-      points[i] = new Point(r.nextDouble(), r.nextDouble());
+    
+    int buffer = 100000;
+    boolean firstAppend = false;
+    for (int j = 0; j < buffer; ++j) {
+      Point[] points = new Point[buffer];
+      int k = j * buffer;
+      int count = 0;
+      for (int i = k; i < k + buffer && i < size; ++i) {
+        points[count] = new Point(r.nextDouble() * 100000, r.nextDouble() * 100000);
+        count++;
+      }
+      if (count == 0) {
+        break;
+      }
+      System.out.println("DONE Creating the input for size : " + count);
+      String fileName =
+          "/Users/prashantchaudhary/Documents/workspace/cgspark/input" + size
+              + ".txt";
+      if (!firstAppend) {
+        System.out.println("Writing the input to " + fileName);
+        FileIOUtil.writePointArrayToFile(points, fileName, count);
+        System.out.println("DONE Writing the input to " + fileName);
+        firstAppend = true;
+      } else {
+        System.out.println("Appending the input to " + fileName);
+        FileIOUtil.appendPointArrayToFile(points, fileName, count);
+        System.out.println("DONE Appending the input to " + fileName);
+      }
     }
-    System.out.println("DONE Creating the input for size : " + size);
-    String fileName =
-        "/Users/prashantchaudhary/Documents/workspace/cgspark/input" + size
-            + ".txt";
-    System.out.println("Writing the input to " + fileName);
-    FileIOUtil.writePointArrayToFile(points, fileName);
-    System.out.println("DONE Writing the input to " + fileName);
   }
 
   private static void printUsage() {
