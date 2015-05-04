@@ -10,16 +10,13 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-
-import com.google.common.collect.Iterables;
 
 import scala.Tuple2;
 import edu.umn.cs.cgspark.core.Point;
-import edu.umn.cs.cgspark.function.PartitionReducer;
 import edu.umn.cs.cgspark.function.StringToPointMapper;
 import edu.umn.cs.cgspark.function.XCoordinateComparator;
+import edu.umn.cs.cgspark.input.InputCreator;
 import edu.umn.cs.cgspark.util.FileIOUtil;
 import edu.umn.cs.cgspark.util.Util;
 
@@ -32,10 +29,10 @@ import edu.umn.cs.cgspark.util.Util;
 public class Skyline {
 
   public static JavaSparkContext sc;
-  public static final int PARTITIONSIZE = 10000;
+  public static int PARTITIONSIZE = 10000;
 
   /**
-   * The recursive method of skyline
+   * The recursive divide and conquer method of skyline
    */
   private static Point[] skyline(Point[] points, int start, int end) {
     if (end - start == 1) {
@@ -78,17 +75,20 @@ public class Skyline {
   }
 
   public static void main(String[] args) throws IOException {
-    if (args.length != 2) {
+    if (args.length != 4) {
       printUsage();
       System.exit(-1);
     }
-    boolean isLocal = Boolean.parseBoolean(args[1]);
+    long start = System.currentTimeMillis();
+    boolean isLocal = Boolean.parseBoolean(args[2]);
     String inputFile = args[0];
+    String outputFile = args[1];
+    PARTITIONSIZE = Integer.parseInt(args[3]);
     SparkConf conf = new SparkConf().setAppName("Skyline Application");
     sc = new JavaSparkContext(conf);
 
     System.out.println("Creating JavaRDD from file : " + inputFile);
-    JavaRDD<String> inputData = sc.textFile(inputFile);
+    JavaRDD<String> inputData = sc.textFile(inputFile, 32);
     JavaRDD<Point> pointsData = inputData.map(new StringToPointMapper());
     System.out.println("DONE Creating JavaRDD from file : " + inputFile);
 
@@ -98,17 +98,18 @@ public class Skyline {
       // calculate skyline.
       Point[] skyline = skyline(pointsArray, 0, pointsArray.length);
       System.out.println("Saving skylineRDD to output.txt");
-      FileIOUtil.writePointArrayToFile(skyline,
-          "/Users/prashantchaudhary/Documents/workspace/cgspark/output.txt");
+      FileIOUtil.writePointArrayToFile(skyline, outputFile);
       System.out.println("DONE Saving skylineRDD to output.txt");
       return;
     }
 
     System.out.println("Mapping points");
 
-    double maxX = pointsData.max(new XCoordinateComparator()).x();
-    double minX = pointsData.min(new XCoordinateComparator()).x();
-    final int dividerValue = (int) ((maxX - minX) / PARTITIONSIZE);
+    /*
+     * double maxX = pointsData.max(new XCoordinateComparator()).x(); double minX =
+     * pointsData.min(new XCoordinateComparator()).x();
+     */
+    final int dividerValue = (int) ((InputCreator.mbr_max - 0) / PARTITIONSIZE);
     System.out.println("Divider value: " + dividerValue);
 
     JavaPairRDD<Integer, Point> keyToPointsData =
@@ -120,15 +121,19 @@ public class Skyline {
             return new Tuple2<Integer, Point>((int) (t.x() / dividerValue), t);
           }
         });
-    System.out.println("DONE Mapping points");
+    System.out.println("DONE Mapping points: " + keyToPointsData.count()
+        + " in " + (System.currentTimeMillis() - start) + "ms");
 
 
+    long start2 = System.currentTimeMillis();
     System.out.println("Creating partitions from mapped points");
     JavaPairRDD<Integer, Iterable<Point>> partitionedPointsRDD =
-        keyToPointsData.groupByKey();
+        keyToPointsData.groupByKey(1000);
     System.out.println("DONE Creating partitions from mapped points: "
-        + partitionedPointsRDD.count());
+        + partitionedPointsRDD.count() + " in "
+        + (System.currentTimeMillis() - start2) + "ms");
 
+    start2 = System.currentTimeMillis();
     System.out.println("Calculating skylines individual partitions.");
     partitionedPointsRDD =
         partitionedPointsRDD
@@ -139,6 +144,7 @@ public class Skyline {
               public Iterable<Point> call(Iterable<Point> v1) throws Exception {
                 Point[] pointsArray = Util.iterableToArray(v1);
                 // calculate skyline.
+                Arrays.sort(pointsArray, new XCoordinateComparator());
                 Point[] skyline = skyline(pointsArray, 0, pointsArray.length);
                 return Arrays.asList(skyline);
               }
@@ -146,8 +152,11 @@ public class Skyline {
     partitionedPointsRDD = partitionedPointsRDD.cache();
     System.out
         .println("DONE Calculating skylines individual partitions. Number of partitions: "
-            + partitionedPointsRDD.count());
+            + partitionedPointsRDD.count()
+            + " in "
+            + (System.currentTimeMillis() - start2) + "ms");
 
+    start2 = System.currentTimeMillis();
     System.out.println("Merging individual skylines.");
     partitionedPointsRDD = partitionedPointsRDD.sortByKey(true);
     List<Tuple2<Integer, Iterable<Point>>> skylineTuples =
@@ -156,21 +165,24 @@ public class Skyline {
     List<Point> result = new ArrayList<Point>();
     result.addAll(Arrays.asList(skyline));
     for (int i = 1; i < skylineTuples.size(); ++i) {
-      Point[] mergeSkylines =
-          mergeSkylines(Util.listToArray(result),
-              Util.iterableToArray(skylineTuples.get(i)._2));
+      Point[] resultArray = Util.listToArray(result);
+      Point[] newArray = Util.iterableToArray(skylineTuples.get(i)._2);
+      Point[] mergeSkylines = mergeSkylines(resultArray, newArray);
       result.clear();
       result.addAll(Arrays.asList(mergeSkylines));
     }
-    System.out.println("DONE Merging individual skylines.");
+    System.out.println("DONE Merging individual skylines. in "
+        + (System.currentTimeMillis() - start2) + "ms");
     System.out.println("Saving skylineRDD to output.txt");
-    FileIOUtil.writePointArrayToFile(Util.listToArray(result),
-        "/Users/prashantchaudhary/Documents/workspace/cgspark/output.txt");
+    FileIOUtil.writePointArrayToFile(Util.listToArray(result), outputFile);
     System.out.println("DONE Saving skylineRDD to output.txt");
+    System.out.println("Total time = " + (System.currentTimeMillis() - start)
+        + "ms");
     sc.close();
   }
 
   private static void printUsage() {
-    System.out.println("Args: <Inputfile> <isLocal>");
+    System.out
+        .println("Args: <Inputfile> <Outputfile> <isLocal> <PartitionSize>");
   }
 }

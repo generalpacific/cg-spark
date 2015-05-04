@@ -2,7 +2,6 @@ package edu.umn.cs.cgspark.core;
 
 import java.io.Serializable;
 
-
 /**
  * Class to hold all points in plane. 
  * @author prashantchaudhary
@@ -57,5 +56,11 @@ public final class Point implements Serializable{
   @Override
   public String toString() {
     return "(" + x + "," + y + ")";
+  }
+  
+  public double distanceTo(Point s) {
+    double dx = s.x - this.x;
+    double dy = s.y - this.y;
+    return Math.sqrt(dx*dx+dy*dy);
   }
 }
