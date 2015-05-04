@@ -11,7 +11,9 @@ Spark.
  * ```mvn install```
 
 ## Running CG\_Spark
- 
+
+lp - localpath where the jars are located in your system
+
  * Skyline
 
 ```
