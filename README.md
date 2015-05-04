@@ -15,7 +15,7 @@ Spark.
  * Skyline
 
 ```
-n/spark-submit --class edu.umn.cs.cgspark.operations.Skyline \
+$ bin/spark-submit --class edu.umn.cs.cgspark.operations.Skyline \
 --master local[k] \
 --driver-class-path \
 lp/cgspark-0.0.1-SNAPSHOT.jar:lp/guava-18.0.jar \
@@ -23,6 +23,7 @@ lp/cgspark-0.0.1-SNAPSHOT.jar \
 lp/<input-filename> <output-filename> <islocal-boolean> \
 <partitionsize>
 ```
+ 
  * Closest Pair
 
 ```
