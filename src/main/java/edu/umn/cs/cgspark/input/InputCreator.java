@@ -9,7 +9,7 @@ import edu.umn.cs.cgspark.util.FileIOUtil;
 
 /**
  * Creates input based on the size passed by the user. The input file is created. The points are
- * generated randomly.
+ * generated based on the distribution that is input.
  * 
  * @author prashantchaudhary
  *

@@ -2,6 +2,11 @@ package edu.umn.cs.cgspark.core;
 
 import java.io.Serializable;
 
+/**
+ * Rectangle object
+ * @author prashantchaudhary
+ *
+ */
 public class Rectangle implements Serializable{
   private static final long serialVersionUID = -9141798944008110788L;
   public int l, r, t, b;

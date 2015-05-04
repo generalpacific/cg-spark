@@ -19,7 +19,6 @@ import edu.umn.cs.cgspark.core.Point;
 import edu.umn.cs.cgspark.core.Rectangle;
 import edu.umn.cs.cgspark.function.StringToPointMapper;
 import edu.umn.cs.cgspark.function.XCoordinateComparator;
-import edu.umn.cs.cgspark.function.YCoordinateComparator;
 import edu.umn.cs.cgspark.input.InputCreator;
 import edu.umn.cs.cgspark.util.FileIOUtil;
 import edu.umn.cs.cgspark.util.Util;
@@ -34,71 +33,7 @@ public class ClosestPair {
 
   public static JavaSparkContext sc;
   public static int PARTITIONSIZE = 100;
-
-  /**
-   * In-memory divide and conquer algorithm for closest pair
-   * @param a
-   * @param tmp
-   * @param l
-   * @param r
-   * @return
-   */
-  public static DistancePointPair closestPair(Point[] a, Point[] tmp, int l,
-      int r) {
-    if (l >= r)
-      return null;
-
-    int mid = (l + r) >> 1;
-    double medianX = a[mid].x();
-    DistancePointPair delta1 = closestPair(a, tmp, l, mid);
-    DistancePointPair delta2 = closestPair(a, tmp, mid + 1, r);
-    DistancePointPair delta;
-    if (delta1 == null || delta2 == null) {
-      delta = delta1 == null ? delta2 : delta1;
-    } else {
-      delta = delta1.distance < delta2.distance ? delta1 : delta2;
-    }
-    int i = l, j = mid + 1, k = l;
-
-    while (i <= mid && j <= r) {
-      if (a[i].y() < a[j].y()) {
-        tmp[k++] = (Point) a[i++];
-      } else {
-        tmp[k++] = (Point) a[j++];
-      }
-    }
-    while (i <= mid) {
-      tmp[k++] = a[i++];
-    }
-    while (j <= r) {
-      tmp[k++] = a[j++];
-    }
-
-    for (i = l; i <= r; i++) {
-      a[i] = tmp[i];
-    }
-
-    k = l;
-    for (i = l; i <= r; i++)
-      if (delta == null || Math.abs(tmp[i].x() - medianX) <= delta.distance)
-        tmp[k++] = tmp[i];
-
-    for (i = l; i < k; i++)
-      for (j = i + 1; j < k; j++) {
-        if (delta != null && tmp[j].y() - tmp[i].y() >= delta.distance) {
-          break;
-        } else if (delta == null || tmp[i].distanceTo(tmp[j]) < delta.distance) {
-          if (delta == null) {
-            delta = new DistancePointPair();
-          }
-          delta.distance = tmp[i].distanceTo(tmp[j]);
-          delta.first = tmp[i];
-          delta.second = tmp[j];
-        }
-      }
-    return delta;
-  }
-
+  
   public static void main(String[] args) throws IOException {
     if (args.length != 4) {
       printUsage();
@@ -139,23 +74,16 @@ public class ClosestPair {
       return;
     }
 
+    /* 
+     * Create grid partitions
+     */
     System.out.println("Mapping points");
 
-    /*
-     * double maxX = pointsData.max(new XCoordinateComparator()).x(); double minX =
-     * pointsData.min(new XCoordinateComparator()).x();
-     */
     final int dividerValueX =
         (int) ((InputCreator.mbr_max - 0) / PARTITIONSIZE);
-    System.out.println("Divider value X: " + dividerValueX);
 
-    /*
-     * double maxY = pointsData.max(new YCoordinateComparator()).y(); double minY =
-     * pointsData.min(new YCoordinateComparator()).y();
-     */
     final int dividerValueY =
         (int) ((InputCreator.mbr_max - 0) / PARTITIONSIZE);
-    System.out.println("Divider value Y: " + dividerValueY);
 
     JavaPairRDD<Rectangle, Point> keyToPointsData =
         pointsData.mapToPair(new PairFunction<Point, Rectangle, Point>() {
@@ -168,7 +96,6 @@ public class ClosestPair {
             int b = ((int) p.y() / dividerValueY) * dividerValueY;
             int t = b + dividerValueY;
             Rectangle rectangle = new Rectangle(l, r, b, t);
-            // System.out.println("Key = " + rectangle + ", value = " + p);
             return new Tuple2<Rectangle, Point>(rectangle, p);
           }
         });
@@ -180,9 +107,13 @@ public class ClosestPair {
     JavaPairRDD<Rectangle, Iterable<Point>> partitionedPointsRDD =
         keyToPointsData.groupByKey(1000);
     System.out.println("DONE Creating partitions from mapped points: "
-        + partitionedPointsRDD.count() + " in " + (System.currentTimeMillis() - start2) + "ms");
+        + partitionedPointsRDD.count() + " in "
+        + (System.currentTimeMillis() - start2) + "ms");
 
-    start2 = System.currentTimeMillis(); 
+    /*
+     * Filter out candidates for the the final in-memory closest pair
+     */
+    start2 = System.currentTimeMillis();
     System.out.println("Calculating closestpairs individual partitions.");
     partitionedPointsRDD =
         partitionedPointsRDD
@@ -234,8 +165,13 @@ public class ClosestPair {
     // partitionedPointsRDD = partitionedPointsRDD.cache();
     System.out
         .println("DONE Calculating closest pairs for partitions. Number of partitions: "
-            + partitionedPointsRDD.count() + " in " + (System.currentTimeMillis() - start2) + "ms");
+            + partitionedPointsRDD.count()
+            + " in "
+            + (System.currentTimeMillis() - start2) + "ms");
 
+    /*
+     * Calculate closest pairs from filtered candidates
+     */
     start2 = System.currentTimeMillis();
     System.out.println("Calculating closest pairs from candidates.");
     JavaRDD<Iterable<Point>> values = partitionedPointsRDD.values();
@@ -252,7 +188,8 @@ public class ClosestPair {
     DistancePointPair closestPair =
         closestPair(listToArray, new Point[listToArray.length], 0,
             listToArray.length - 1);
-    System.out.println("DONE Calculating closest pairs from candidates in " + (System.currentTimeMillis() - start2) + "ms");
+    System.out.println("DONE Calculating closest pairs from candidates in "
+        + (System.currentTimeMillis() - start2) + "ms");
     System.out.println("Closest pair: ");
     System.out.println("Point 1: " + closestPair.first);
     System.out.println("Point 2: " + closestPair.second);
@@ -263,6 +200,76 @@ public class ClosestPair {
   }
 
   private static void printUsage() {
-    System.out.println("Args: <Inputfile> <Outputfile> <isLocal> <paritionsize>");
+    System.out
+        .println("Args: <Inputfile> <Outputfile> <isLocal> <paritionsize>");
+  }
+  
+
+  /**
+   * In-memory divide and conquer algorithm for closest pair
+   * 
+   * @param a
+   * @param tmp
+   * @param l
+   * @param r
+   * @return
+   */
+  public static DistancePointPair closestPair(Point[] a, Point[] tmp, int l,
+      int r) {
+    if (l >= r)
+      return null;
+
+    int mid = (l + r) >> 1;
+    double medianX = a[mid].x();
+    DistancePointPair delta1 = closestPair(a, tmp, l, mid);
+    DistancePointPair delta2 = closestPair(a, tmp, mid + 1, r);
+    DistancePointPair delta;
+    if (delta1 == null || delta2 == null) {
+      delta = delta1 == null ? delta2 : delta1;
+    } else {
+      delta = delta1.distance < delta2.distance ? delta1 : delta2;
+    }
+    int i = l, j = mid + 1, k = l;
+
+    while (i <= mid && j <= r) {
+      if (a[i].y() < a[j].y()) {
+        tmp[k++] = (Point) a[i++];
+      } else {
+        tmp[k++] = (Point) a[j++];
+      }
+    }
+    while (i <= mid) {
+      tmp[k++] = a[i++];
+    }
+    while (j <= r) {
+      tmp[k++] = a[j++];
+    }
+
+    for (i = l; i <= r; i++) {
+      a[i] = tmp[i];
+    }
+
+    k = l;
+    for (i = l; i <= r; i++) {
+      if (delta == null || Math.abs(tmp[i].x() - medianX) <= delta.distance) {
+        tmp[k++] = tmp[i];
+      }
+    }
+
+    for (i = l; i < k; i++) {
+      for (j = i + 1; j < k; j++) {
+        if (delta != null && tmp[j].y() - tmp[i].y() >= delta.distance) {
+          break;
+        } else if (delta == null || tmp[i].distanceTo(tmp[j]) < delta.distance) {
+          if (delta == null) {
+            delta = new DistancePointPair();
+          }
+          delta.distance = tmp[i].distanceTo(tmp[j]);
+          delta.first = tmp[i];
+          delta.second = tmp[j];
+        }
+      }
+    }
+    return delta;
   }
 }
