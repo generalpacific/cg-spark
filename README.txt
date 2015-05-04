@@ -13,6 +13,8 @@ Spark.
 ## Running CG\_Spark
 
 lp - localpath where the jars are located in your system
+Make sure to place the cgspark-0.0.1-SNAPSHOT.jar and  guava-18.0.jar in an appropriate directory “lp” and then execute the commands.
+Run the commands from your directory where Spark is installed. 
 
  * Skyline
 
