@@ -1,9 +1,9 @@
-package edu.umn.cs.cgspark.function;
+package org.apache.cgspark.function;
 
 import java.io.Serializable;
 import java.util.Comparator;
 
-import edu.umn.cs.cgspark.core.Point;
+import org.apache.cgspark.core.Point;
 
 public class XCoordinateComparator implements Comparator<Point>, Serializable {
 

@@ -1,10 +1,16 @@
-package edu.umn.cs.cgspark.operations;
+package org.apache.cgspark.operations;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.cgspark.core.Point;
+import org.apache.cgspark.function.StringToPointMapper;
+import org.apache.cgspark.function.XCoordinateComparator;
+import org.apache.cgspark.input.InputCreator;
+import org.apache.cgspark.util.FileIOUtil;
+import org.apache.cgspark.util.Util;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -15,12 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import scala.Tuple2;
-import edu.umn.cs.cgspark.core.Point;
-import edu.umn.cs.cgspark.function.StringToPointMapper;
-import edu.umn.cs.cgspark.function.XCoordinateComparator;
-import edu.umn.cs.cgspark.input.InputCreator;
-import edu.umn.cs.cgspark.util.FileIOUtil;
-import edu.umn.cs.cgspark.util.Util;
 
 /**
  * Operator for calculating the skyline of given points.

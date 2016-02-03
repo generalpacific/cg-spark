@@ -1,13 +1,13 @@
-package edu.umn.cs.cgspark.function;
+package org.apache.cgspark.function;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cgspark.core.Point;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 
-import edu.umn.cs.cgspark.core.Point;
 import scala.Tuple2;
 
 public class IntegerToPointsParition implements PairFunction<Point, Integer, JavaRDD<Point>> {

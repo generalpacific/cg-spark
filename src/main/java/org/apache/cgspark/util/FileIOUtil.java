@@ -1,10 +1,10 @@
-package edu.umn.cs.cgspark.util;
+package org.apache.cgspark.util;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import edu.umn.cs.cgspark.core.Point;
+import org.apache.cgspark.core.Point;
 
 /**
  * Util functions to IO in text files

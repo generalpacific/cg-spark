@@ -1,7 +1,7 @@
-package edu.umn.cs.cgspark.function;
+package org.apache.cgspark.function;
 
+import org.apache.cgspark.core.Point;
 import org.apache.spark.api.java.function.Function;
-import edu.umn.cs.cgspark.core.Point;
 
 /**
  * Maps a read input String to a {@link Point}

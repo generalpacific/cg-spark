@@ -1,11 +1,11 @@
-package edu.umn.cs.cgspark.input;
+package org.apache.cgspark.input;
 
 import java.io.IOException;
 import java.util.Random;
 
-import edu.umn.cs.cgspark.core.Point;
-import edu.umn.cs.cgspark.core.Rectangle;
-import edu.umn.cs.cgspark.util.FileIOUtil;
+import org.apache.cgspark.core.Point;
+import org.apache.cgspark.core.Rectangle;
+import org.apache.cgspark.util.FileIOUtil;
 
 /**
  * Creates input based on the size passed by the user. The input file is created. The points are

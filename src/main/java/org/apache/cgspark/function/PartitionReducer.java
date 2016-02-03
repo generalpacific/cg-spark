@@ -1,12 +1,11 @@
-package edu.umn.cs.cgspark.function;
+package org.apache.cgspark.function;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cgspark.core.Point;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
-
-import edu.umn.cs.cgspark.core.Point;
 
 public class PartitionReducer implements
     Function2<JavaRDD<Point>, JavaRDD<Point>, JavaRDD<Point>> {

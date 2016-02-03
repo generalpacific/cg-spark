@@ -1,4 +1,4 @@
-package edu.umn.cs.cgspark.core;
+package org.apache.cgspark.core;
 
 import java.io.Serializable;
 

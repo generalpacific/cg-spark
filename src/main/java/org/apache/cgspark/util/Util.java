@@ -1,10 +1,10 @@
-package edu.umn.cs.cgspark.util;
+package org.apache.cgspark.util;
 
 import java.util.List;
 
-import com.google.common.collect.Iterables;
+import org.apache.cgspark.core.Point;
 
-import edu.umn.cs.cgspark.core.Point;
+import com.google.common.collect.Iterables;
 
 /**
  * Util class
