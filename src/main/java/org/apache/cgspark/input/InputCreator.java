@@ -5,11 +5,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.cgspark.core.DistributionType;
 import org.apache.cgspark.core.Rectangle;
 import org.apache.cgspark.input.generator.PointGenerator;
 import org.apache.cgspark.input.generator.PointGeneratorFactory;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +36,21 @@ public final class InputCreator {
 
   public final static int mbr_max = 1000000;
 
-  public static void main(String[] arg) throws IOException, InterruptedException, ExecutionException {
+  public static void main(String[] arg) throws IOException,
+      InterruptedException, ExecutionException {
     if (arg.length != 3) {
       printUsage();
       System.exit(-1);
     }
+    
+    // Add a STDOUT logger
+    final ConsoleAppender console = new ConsoleAppender();
+    final String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+    console.setLayout(new PatternLayout(PATTERN)); 
+    console.setThreshold(Level.INFO);
+    console.activateOptions();
+    org.apache.log4j.Logger.getRootLogger().addAppender(console);
+    
     final int numOfPoints = Integer.parseInt(arg[1]);
     final DistributionType type = DistributionType.fromName(arg[2]);
     final PointGeneratorFactory factory =
@@ -59,33 +73,40 @@ public final class InputCreator {
     final String fileName = arg[0];
     final List<ListenableFuture<Void>> tasks = Lists.newArrayList();
     boolean firstWrite = true;
+    int pointsRemaining = numOfPoints;
     for (int i = 0; i < numOfPoints; i = i + buffer) {
+      final int numOfPointsToWrite = Math.min(pointsRemaining, buffer);
+      logger.info("Writing " + numOfPointsToWrite + " to " + fileName);
       if (firstWrite) {
-        tasks.add(service.submit(new PointGeneratorWorker(buffer,
-            pointGenerator, firstWrite, fileName)));
-      } else {
+        final ListenableFuture<Void> firstFuture =
+            service.submit(new PointGeneratorWorker(numOfPointsToWrite,
+                pointGenerator, firstWrite, fileName));
+        firstFuture.get();
         firstWrite = false;
-        tasks.add(service.submit(new PointGeneratorWorker(buffer,
+      } else {
+        tasks.add(service.submit(new PointGeneratorWorker(numOfPointsToWrite,
             pointGenerator, firstWrite, fileName)));
 
       }
+      pointsRemaining = pointsRemaining - numOfPointsToWrite;
     }
 
     final ListenableFuture<List<Void>> results = Futures.allAsList(tasks);
-    logger.info("Starting writing points to file: " + fileName);
-
-    results.get();
 
     Futures.addCallback(results, new FutureCallback<List<Void>>() {
 
       public void onFailure(Throwable arg0) {
         logger.error("Input creator failed with exception.", arg0);
+        service.shutdown();
       }
 
       public void onSuccess(List<Void> arg0) {
         logger.info("Input creation successful.");
+        service.shutdown();
       }
     }, service);
+    
+    results.get();
   }
 
   private static void printUsage() {
