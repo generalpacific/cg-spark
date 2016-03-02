@@ -9,6 +9,7 @@ import org.apache.cgspark.core.Point;
 import org.apache.cgspark.function.StringToPointMapper;
 import org.apache.cgspark.function.XCoordinateComparator;
 import org.apache.cgspark.input.InputCreator;
+import org.apache.cgspark.operations.local.SkylineLocal;
 import org.apache.cgspark.util.FileIOUtil;
 import org.apache.cgspark.util.Util;
 import org.apache.spark.SparkConf;
@@ -53,10 +54,11 @@ public class Skyline {
     logger.info("DONE Creating JavaRDD from file : " + inputFile);
 
     if (isLocal) {
+      logger.info("Calculating skyline locally");
       Point[] pointsArray = Util.listToArray(pointsData.toArray());
 
       // calculate local skyline.
-      Point[] skyline = skyline(pointsArray, 0, pointsArray.length);
+      Point[] skyline = SkylineLocal.skyline(pointsArray, 0, pointsArray.length);
       logger.info("Saving skylineRDD to output.txt");
       FileIOUtil.writePointArrayToFile(skyline, outputFile);
       logger.info("DONE Saving skylineRDD to output.txt");
@@ -81,7 +83,8 @@ public class Skyline {
             return new Tuple2<Integer, Point>((int) (t.x() / dividerValue), t);
           }
         });
-    logger.info("DONE Mapping points: " + keyToPointsData.count()
+    final long count = keyToPointsData.count();
+    logger.info("DONE Mapping points: " + count
         + " in " + (System.currentTimeMillis() - start) + "ms");
 
 
@@ -108,7 +111,7 @@ public class Skyline {
                 Point[] pointsArray = Util.iterableToArray(v1);
                 // calculate skyline.
                 Arrays.sort(pointsArray, new XCoordinateComparator());
-                Point[] skyline = skyline(pointsArray, 0, pointsArray.length);
+                Point[] skyline = SkylineLocal.skyline(pointsArray, 0, pointsArray.length);
                 return Arrays.asList(skyline);
               }
             });
@@ -132,7 +135,7 @@ public class Skyline {
     for (int i = 1; i < skylineTuples.size(); ++i) {
       Point[] resultArray = Util.listToArray(result);
       Point[] newArray = Util.iterableToArray(skylineTuples.get(i)._2);
-      Point[] mergeSkylines = mergeSkylines(resultArray, newArray);
+      Point[] mergeSkylines = SkylineLocal.mergeSkylines(resultArray, newArray);
       result.clear();
       result.addAll(Arrays.asList(mergeSkylines));
     }
@@ -149,48 +152,5 @@ public class Skyline {
   private static void printUsage() {
     System.out
         .println("Args: <Inputfile> <Outputfile> <isLocal> <PartitionSize>");
-  }
-
-  /**
-   * The recursive divide and conquer method of skyline
-   */
-  private static Point[] skyline(Point[] points, int start, int end) {
-    if (end - start == 1) {
-      // Return the one input point as the skyline
-      return new Point[] {points[start]};
-    }
-    int mid = (start + end) / 2;
-    // Find the skyline of each half
-    Point[] skyline1 = skyline(points, start, mid);
-    Point[] skyline2 = skyline(points, mid, end);
-    // Merge the two skylines
-    int cutPointForSkyline1 = 0;
-    while (cutPointForSkyline1 < skyline1.length
-        && !skylineDominate(skyline2[0], skyline1[cutPointForSkyline1])) {
-      cutPointForSkyline1++;
-    }
-    Point[] result = new Point[cutPointForSkyline1 + skyline2.length];
-    System.arraycopy(skyline1, 0, result, 0, cutPointForSkyline1);
-    System.arraycopy(skyline2, 0, result, cutPointForSkyline1, skyline2.length);
-    return result;
-  }
-
-  public static Point[] mergeSkylines(Point[] skyline1, Point[] skyline2) {
-    int cutPointForSkyline1 = 0;
-    while (cutPointForSkyline1 < skyline1.length
-        && !skylineDominate(skyline2[0], skyline1[cutPointForSkyline1])) {
-      cutPointForSkyline1++;
-    }
-    Point[] result = new Point[cutPointForSkyline1 + skyline2.length];
-    System.arraycopy(skyline1, 0, result, 0, cutPointForSkyline1);
-    System.arraycopy(skyline2, 0, result, cutPointForSkyline1, skyline2.length);
-    return result;
-  }
-
-  /**
-   * Returns true if p1 dominates p2 according in maxmax
-   */
-  private static boolean skylineDominate(Point p1, Point p2) {
-    return p1.x() >= p2.x() && p1.y() >= p2.y();
   }
 }
