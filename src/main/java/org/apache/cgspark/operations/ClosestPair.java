@@ -12,6 +12,7 @@ import org.apache.cgspark.core.Rectangle;
 import org.apache.cgspark.function.StringToPointMapper;
 import org.apache.cgspark.function.XCoordinateComparator;
 import org.apache.cgspark.input.InputCreator;
+import org.apache.cgspark.operations.local.ClosestPairLocal;
 import org.apache.cgspark.util.FileIOUtil;
 import org.apache.cgspark.util.Util;
 import org.apache.spark.SparkConf;
@@ -60,7 +61,8 @@ public class ClosestPair {
       Arrays.sort(pointsArray, new XCoordinateComparator());
       // calculate closestPair.
       DistancePointPair closestPair =
-          closestPair(pointsArray, new Point[pointsArray.length], 0,
+          ClosestPairLocal.closestPair(pointsArray, new Point[pointsArray
+                          .length], 0,
               pointsArray.length - 1);
       logger.info("Saving closestpair to output.txt");
       Point output[] = new Point[2];
@@ -133,7 +135,9 @@ public class ClosestPair {
                 Arrays.sort(pointsArray, new XCoordinateComparator());
                 // calculate skyline.
                 DistancePointPair closestPair =
-                    closestPair(pointsArray, new Point[pointsArray.length], 0,
+                    ClosestPairLocal.closestPair(pointsArray, new
+                                    Point[pointsArray
+                                    .length], 0,
                         pointsArray.length - 1);
 
                 List<Point> candidates = new ArrayList<Point>();
@@ -187,8 +191,8 @@ public class ClosestPair {
     Collections.sort(finalCandidates, new XCoordinateComparator());
     logger.info("Final candidates size: " + finalCandidates.size());
     Point[] listToArray = Util.listToArray(finalCandidates);
-    DistancePointPair closestPair =
-        closestPair(listToArray, new Point[listToArray.length], 0,
+    DistancePointPair closestPair = ClosestPairLocal.closestPair(listToArray,
+            new Point[listToArray.length], 0,
             listToArray.length - 1);
     logger.info("DONE Calculating closest pairs from candidates in "
         + (System.currentTimeMillis() - start2) + "ms");
@@ -204,74 +208,5 @@ public class ClosestPair {
   private static void printUsage() {
     System.out
         .println("Args: <Inputfile> <Outputfile> <isLocal> <paritionsize>");
-  }
-  
-
-  /**
-   * In-memory divide and conquer algorithm for closest pair
-   * 
-   * @param a
-   * @param tmp
-   * @param l
-   * @param r
-   * @return
-   */
-  public static DistancePointPair closestPair(Point[] a, Point[] tmp, int l,
-      int r) {
-    if (l >= r)
-      return null;
-
-    int mid = (l + r) >> 1;
-    double medianX = a[mid].x();
-    DistancePointPair delta1 = closestPair(a, tmp, l, mid);
-    DistancePointPair delta2 = closestPair(a, tmp, mid + 1, r);
-    DistancePointPair delta;
-    if (delta1 == null || delta2 == null) {
-      delta = delta1 == null ? delta2 : delta1;
-    } else {
-      delta = delta1.distance < delta2.distance ? delta1 : delta2;
-    }
-    int i = l, j = mid + 1, k = l;
-
-    while (i <= mid && j <= r) {
-      if (a[i].y() < a[j].y()) {
-        tmp[k++] = (Point) a[i++];
-      } else {
-        tmp[k++] = (Point) a[j++];
-      }
-    }
-    while (i <= mid) {
-      tmp[k++] = a[i++];
-    }
-    while (j <= r) {
-      tmp[k++] = a[j++];
-    }
-
-    for (i = l; i <= r; i++) {
-      a[i] = tmp[i];
-    }
-
-    k = l;
-    for (i = l; i <= r; i++) {
-      if (delta == null || Math.abs(tmp[i].x() - medianX) <= delta.distance) {
-        tmp[k++] = tmp[i];
-      }
-    }
-
-    for (i = l; i < k; i++) {
-      for (j = i + 1; j < k; j++) {
-        if (delta != null && tmp[j].y() - tmp[i].y() >= delta.distance) {
-          break;
-        } else if (delta == null || tmp[i].distanceTo(tmp[j]) < delta.distance) {
-          if (delta == null) {
-            delta = new DistancePointPair();
-          }
-          delta.distance = tmp[i].distanceTo(tmp[j]);
-          delta.first = tmp[i];
-          delta.second = tmp[j];
-        }
-      }
-    }
-    return delta;
   }
 }
