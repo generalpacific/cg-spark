@@ -16,7 +16,12 @@ public class ClosestPairLocal {
     /**
      * In-memory divide and conquer algorithm for closest pair
      */
-    public static DistancePointPair closestPair(Point[] a, Point[] tmp, int
+    public static DistancePointPair closestPair(Point[] a) {
+        return closestPair(a, new Point[a.length], 0, a.length - 1);
+    }
+
+
+    private static DistancePointPair closestPair(Point[] a, Point[] tmp, int
             l, int r) {
         if (l >= r) return null;
 

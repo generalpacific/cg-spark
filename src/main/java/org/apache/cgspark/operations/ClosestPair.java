@@ -60,8 +60,7 @@ public class ClosestPair {
             Arrays.sort(pointsArray, new XCoordinateComparator());
             // calculate closestPair.
             DistancePointPair closestPair = ClosestPairLocal.closestPair
-                    (pointsArray, new Point[pointsArray.length], 0,
-                            pointsArray.length - 1);
+                    (pointsArray);
             logger.info("Saving closestpair to output.txt");
             Point output[] = new Point[2];
             output[0] = closestPair.first;
@@ -131,8 +130,7 @@ public class ClosestPair {
                 Arrays.sort(pointsArray, new XCoordinateComparator());
                 // calculate skyline.
                 DistancePointPair closestPair = ClosestPairLocal.closestPair
-                        (pointsArray, new Point[pointsArray.length], 0,
-                                pointsArray.length - 1);
+                        (pointsArray);
 
                 List<Point> candidates = new ArrayList<Point>();
                 if (closestPair == null || pointsArray.length == 1) {
@@ -185,8 +183,7 @@ public class ClosestPair {
         logger.info("Final candidates size: " + finalCandidates.size());
         Point[] listToArray = Util.listToArray(finalCandidates);
         DistancePointPair closestPair = ClosestPairLocal.closestPair
-                (listToArray, new Point[listToArray.length], 0, listToArray
-                        .length - 1);
+                (listToArray);
         logger.info("DONE Calculating closest pairs from candidates in " +
                 (System.currentTimeMillis() - start2) + "ms");
         logger.info("Closest pair: ");
