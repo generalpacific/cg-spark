@@ -10,26 +10,28 @@ import org.apache.spark.api.java.function.PairFunction;
 
 import scala.Tuple2;
 
-public class IntegerToPointsParition implements PairFunction<Point, Integer, JavaRDD<Point>> {
-  
-  private static final long serialVersionUID = -9139114352360374430L;
-  private static final int partitionSize = 1000;
-  private static Double MIN;
-  private static Double MAX;
-  private final JavaSparkContext sc;
-  private static int dividerValue;
-  
-  public IntegerToPointsParition (JavaSparkContext sc, Double min, Double max) {
-    this.sc = sc;
-    this.MIN = min;
-    this.MAX = max;
-    this.dividerValue = (int) ((MAX - MIN) / partitionSize);
-  }
+public class IntegerToPointsParition implements PairFunction<Point, Integer,
+        JavaRDD<Point>> {
 
-  public Tuple2<Integer, JavaRDD<Point>> call(Point t) throws Exception {
-    List<Point> points = new ArrayList<Point>();
-    points.add(t);
-    return new Tuple2<Integer, JavaRDD<Point>>((int) (t.x() / dividerValue), sc.parallelize(points));
-  }
+    private static final long serialVersionUID = -9139114352360374430L;
+    private static final int partitionSize = 1000;
+    private static Double MIN;
+    private static Double MAX;
+    private final JavaSparkContext sc;
+    private static int dividerValue;
+
+    public IntegerToPointsParition(JavaSparkContext sc, Double min, Double
+            max) {
+        this.sc = sc;
+        this.MIN = min;
+        this.MAX = max;
+        this.dividerValue = (int) ((MAX - MIN) / partitionSize);
+    }
+
+    public Tuple2<Integer, JavaRDD<Point>> call(Point t) throws Exception {
+        List<Point> points = new ArrayList<Point>();
+        points.add(t);
+        return new Tuple2<Integer, JavaRDD<Point>>((int) (t.x() / dividerValue), sc.parallelize(points));
+    }
 
 }
