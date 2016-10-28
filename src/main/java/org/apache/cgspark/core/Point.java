@@ -58,6 +58,6 @@ public final class Point implements Serializable {
     public double distanceTo(Point s) {
         double dx = s.x - this.x;
         double dy = s.y - this.y;
-        return Math.sqrt(dx * dx + dy * dy);
+        return Math.hypot(dx, dy);
     }
 }

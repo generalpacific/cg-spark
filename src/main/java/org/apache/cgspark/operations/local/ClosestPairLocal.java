@@ -3,6 +3,8 @@ package org.apache.cgspark.operations.local;
 import org.apache.cgspark.core.DistancePointPair;
 import org.apache.cgspark.core.Point;
 
+import java.util.List;
+
 /**
  * In memory implementation of Closest pair algorithm based on divide and
  * conquer.
@@ -13,13 +15,36 @@ public class ClosestPairLocal {
 
     }
 
+    public static DistancePointPair bruteForceClosestPair(final List<Point>
+                                                                  points) {
+        final Point first = points.get(0);
+        final Point second = points.get(1);
+        DistancePointPair distancePointPair = new DistancePointPair(first,
+                second, first.distanceTo(second));
+
+        final int size = points.size();
+        for (int i = 0; i < size - 1; ++i) {
+            final Point currentFirst = points.get(i);
+            for (int j = i + 1; j < size; ++j) {
+                final Point currentSecond = points.get(j);
+                final double currentDistance = currentFirst.distanceTo
+                        (currentSecond);
+                if (currentDistance < distancePointPair.distance) {
+                    distancePointPair = new DistancePointPair(currentFirst,
+                            currentSecond, currentDistance);
+                }
+            }
+        }
+        distancePointPair.rebase();
+        return distancePointPair;
+    }
+
     /**
      * In-memory divide and conquer algorithm for closest pair
      */
     public static DistancePointPair closestPair(Point[] a) {
         return closestPair(a, new Point[a.length], 0, a.length - 1);
     }
-
 
     private static DistancePointPair closestPair(Point[] a, Point[] tmp, int
             l, int r) {
