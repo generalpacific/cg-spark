@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.cgspark.cli.CommandLineArgs;
+import org.apache.cgspark.cli.CommonsCliArgsParser;
 import org.apache.cgspark.core.DistancePointPair;
 import org.apache.cgspark.core.Point;
 import org.apache.cgspark.core.Rectangle;
@@ -16,12 +16,6 @@ import org.apache.cgspark.input.InputCreator;
 import org.apache.cgspark.operations.local.ClosestPairLocal;
 import org.apache.cgspark.util.FileIOUtil;
 import org.apache.cgspark.util.Util;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -45,14 +39,17 @@ public class ClosestPair {
     public static JavaSparkContext sc;
     public static int PARTITIONSIZE = 100;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ParseException {
         long start = System.currentTimeMillis();
 
-        final CommandLineArgs commandLineArgs = getCommandLineArgs(args);
-        boolean isLocal = commandLineArgs.isLocal();
-        String inputFile = commandLineArgs.getInputFile();
-        String outputFile = commandLineArgs.getOutputFile();
-        PARTITIONSIZE = commandLineArgs.getPartitionSize();
+        final CommonsCliArgsParser parser = new CommonsCliArgsParser(args,
+                ClosestPair.class.getSimpleName());
+
+        boolean isLocal = parser.isLocal();
+        String inputFile = parser.getInputFile();
+        String outputFile = parser.getOutputFile();
+        PARTITIONSIZE = parser.getPartitionSize();
+
         SparkConf conf = new SparkConf().setAppName("ClosestPair Application");
         sc = new JavaSparkContext(conf);
 
@@ -107,8 +104,8 @@ public class ClosestPair {
                 return new Tuple2<Rectangle, Point>(rectangle, p);
             }
         });
-        logger.info("DONE Mapping points no=" + keyToPointsData.count() + " " +
-                "in " + (System.currentTimeMillis() - start));
+        logger.info("DONE Mapping points no=" + keyToPointsData.count() + " "
+                + "in " + (System.currentTimeMillis() - start));
 
         long start2 = System.currentTimeMillis();
         logger.info("Creating partitions from mapped points");
@@ -168,9 +165,9 @@ public class ClosestPair {
             }
         });
         // partitionedPointsRDD = partitionedPointsRDD.cache();
-        logger.info("DONE Calculating closest pairs for partitions. Number of" +
-                " partitions: " + partitionedPointsRDD.count() + " in " +
-                (System.currentTimeMillis() - start2) + "ms");
+        logger.info("DONE Calculating closest pairs for partitions. Number "
+                + "of" + " partitions: " + partitionedPointsRDD.count() + " " +
+                "in " + "" + (System.currentTimeMillis() - start2) + "ms");
 
     /*
      * Calculate closest pairs from filtered candidates
@@ -199,49 +196,5 @@ public class ClosestPair {
         logger.info("Total time taken: " + (System.currentTimeMillis() -
                 start) + "ms");
         sc.close();
-    }
-
-    private static CommandLineArgs getCommandLineArgs(String[] args) {
-        final Options options = new Options();
-
-        final Option inputFileOption = new Option("i", "input", true, "Input " +
-                "File");
-        inputFileOption.setRequired(true);
-        options.addOption(inputFileOption);
-
-        final Option outputFileOption = new Option("o", "output", true,
-                "Output File");
-        outputFileOption.setRequired(true);
-        options.addOption(outputFileOption);
-
-        final Option isLocalOption = new Option("l", "isLocal", false, "Run " +
-                "locally instead of as spark job");
-        isLocalOption.setRequired(true);
-        options.addOption(isLocalOption);
-
-        final Option partionSizeOption = new Option("p", "partition", true,
-                "Partition Size");
-        partionSizeOption.setRequired(true);
-        options.addOption(partionSizeOption);
-
-        final CommandLineParser parser = new GnuParser();
-        final HelpFormatter formatter = new HelpFormatter();
-        final CommandLine cmd;
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            logger.error("Got exception in parsing command line arguments", e);
-            formatter.printHelp("ClosestPair", options);
-            System.exit(1);
-            return null;
-        }
-
-        String inputFile = cmd.getOptionValue("input");
-        String outputFile = cmd.getOptionValue("output");
-        boolean isLocal = cmd.hasOption("l");
-        int partitionSize = Integer.parseInt(cmd.getOptionValue("partition"));
-
-        return new CommandLineArgs(inputFile, outputFile, isLocal,
-                partitionSize);
     }
 }
