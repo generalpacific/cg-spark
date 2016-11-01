@@ -11,7 +11,9 @@ import org.apache.cgspark.operations.local.ClosestPairLocal;
 import org.apache.cgspark.util.Util;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -56,8 +58,8 @@ public class ClosestPairLocalTest {
     @Test
     public void testTwoPoints() {
         final List<Point> pointList = Lists.newArrayList();
-        pointList.add(POINT00);
         pointList.add(POINT11);
+        pointList.add(POINT00);
 
         final Point[] pointsArray = Util.listToArray(pointList);
 
@@ -109,8 +111,8 @@ public class ClosestPairLocalTest {
     @Test
     public void testTwoPointsBruteForce() {
         final List<Point> pointList = Lists.newArrayList();
-        pointList.add(POINT00);
         pointList.add(POINT11);
+        pointList.add(POINT00);
 
         final DistancePointPair closestPair = ClosestPairLocal
                 .bruteForceClosestPair(pointList);
@@ -134,5 +136,30 @@ public class ClosestPairLocalTest {
                 .second, is(expectedSecondPoint));
         assertThat("Incorrect distance", closestPair.distance, is
                 (expectedFirstPoint.distanceTo(expectedSecondPoint)));
+    }
+
+    /**
+     * Compares outputs of Brute force against divide and conquer closest
+     * pair imeplementations.
+     */
+    @Test
+    public void testDivideAndConquerAndBruteForce() {
+        for (int j = 0; j < 100; ++j) {
+            final List<Point> randomPoints = new ArrayList<>();
+            final Random rand = new Random();
+            for (int i = 0; i < 1000; ++i) {
+                double randomX = 1 + (10 - 1) * rand.nextDouble();
+                double randomY = 1 + (10 - 1) * rand.nextDouble();
+                randomPoints.add(new Point(randomX, randomY));
+            }
+
+            final DistancePointPair bruteForce = ClosestPairLocal
+                    .bruteForceClosestPair(randomPoints);
+
+            final DistancePointPair divideAndConquer = ClosestPairLocal
+                    .closestPair(Util.listToArray(randomPoints));
+
+            assertThat(bruteForce.distance, is(divideAndConquer.distance));
+        }
     }
 }
