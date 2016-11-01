@@ -49,8 +49,9 @@ lp/cgspark-0.0.1-SNAPSHOT.jar \
 
  * Usage information:
 
+```
 -i,--input <arg>       Input File
 -l,--isLocal           Run locally instead of as spark job
 -o,--output <arg>      Output File
 -p,--partition <arg>   Partition Size
-
+```
