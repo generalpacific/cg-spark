@@ -22,8 +22,8 @@ $ bin/spark-submit --class edu.umn.cs.cgspark.operations.Skyline \
 --driver-class-path \
 lp/cgspark-0.0.1-SNAPSHOT.jar:lp/guava-18.0.jar \
 lp/cgspark-0.0.1-SNAPSHOT.jar \
-lp/<input-filename> <output-filename> <islocal-boolean> \
-<partitionsize>
+-i lp/<input-filename> -o <output-filename> -l \
+-p <partitionsize>
 ```
  
  * Closest Pair
@@ -35,8 +35,8 @@ edu.umn.cs.cgspark.operations.ClosestPair \
 --driver-class-path \
 lp/cgspark-0.0.1-SNAPSHOT.jar:lp/guava-18.0.jar \
 lp/cgspark-0.0.1-SNAPSHOT.jar \
-lp/<input-filename> <output-filename> <islocal-boolean> \
-<partitionsize>
+-i lp/<input-filename> -o <output-filename> -l \
+-p <partitionsize>
 ```
 
  * Command for generating datasets
@@ -46,3 +46,11 @@ lp/<input-filename> <output-filename> <islocal-boolean> \
  <outputfile> <number of points> \
  <distribution-uni|gaus|cor|anti|circle>
  ```
+
+ * Usage information:
+
+-i,--input <arg>       Input File
+-l,--isLocal           Run locally instead of as spark job
+-o,--output <arg>      Output File
+-p,--partition <arg>   Partition Size
+
