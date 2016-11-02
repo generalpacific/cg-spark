@@ -1,13 +1,13 @@
 # Change the following options for different configurations:
 
 # USAGE:
-# bin/spark-submit --class org.apache.cgspark.operations.Skyline \
+# bin/spark-submit --class org.apache.cgspark.operations.ClosestPair \
 #   --master local[k] \
 #   --driver-class-path \
 #   <Local-path>/cgspark-0.0.1-SNAPSHOT.jar:<Local-path>/guava-18.0.jar \
 #   <Local-path>/cgspark-0.0.1-SNAPSHOT.jar \
-#   <input-filename> <output-filename> <islocal-boolean> \
-#   <partitionsize>
+#   -i <input-filename> -o <output-filename> -l \
+#   -p <partitionsize>
 
 bin/spark-submit --class org.apache.cgspark.operations.ClosestPair --master local[2] \
   --driver-class-path \
