@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import org.apache.cgspark.core.DistancePointPair;
 import org.apache.cgspark.core.Point;
 
 /**
@@ -45,6 +46,28 @@ public final class FileIOUtil {
                 outputWriter.write(points[i].x() + "," + points[i].y());
                 outputWriter.newLine();
             }
+        } finally {
+            if (outputWriter != null) {
+                outputWriter.flush();
+                outputWriter.close();
+            }
+        }
+    }
+
+    public static synchronized void writeDistancePointPairArrayToFile
+            (DistancePointPair distancePointPair, String fileName) throws
+            IOException {
+        BufferedWriter outputWriter = null;
+        try {
+            outputWriter = new BufferedWriter(new FileWriter(fileName));
+            outputWriter.write(distancePointPair.first.x() + "," +
+                    distancePointPair.first.y());
+            outputWriter.newLine();
+            outputWriter.write(distancePointPair.second.x() + "," +
+                    distancePointPair.second.y());
+            outputWriter.newLine();
+            outputWriter.write(distancePointPair.distance + "");
+            outputWriter.newLine();
         } finally {
             if (outputWriter != null) {
                 outputWriter.flush();

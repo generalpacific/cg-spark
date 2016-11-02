@@ -64,11 +64,9 @@ public class ClosestPair {
             // calculate closestPair.
             DistancePointPair closestPair = ClosestPairLocal.closestPair
                     (pointsArray);
-            logger.info("Saving closestpair to output.txt");
-            Point output[] = new Point[2];
-            output[0] = closestPair.first;
-            output[1] = closestPair.second;
-            FileIOUtil.writePointArrayToFile(output, outputFile);
+            logger.info("Saving closestpair to: " + outputFile);
+            FileIOUtil.writeDistancePointPairArrayToFile(closestPair,
+                    outputFile);
             logger.info("Closest pair: ");
             logger.info("Point 1: " + closestPair.first);
             logger.info("Point 2: " + closestPair.second);
@@ -79,9 +77,9 @@ public class ClosestPair {
             return;
         }
 
-    /* 
-     * Create grid partitions
-     */
+        /*
+        * Create grid partitions
+        */
         logger.info("Mapping points");
 
         final int dividerValueX = (int) ((InputCreator.mbr_max - 0) /
@@ -115,9 +113,9 @@ public class ClosestPair {
                 partitionedPointsRDD.count() + " in " + (System
                 .currentTimeMillis() - start2) + "ms");
 
-    /*
-     * Filter out candidates for the the final in-memory closest pair
-     */
+        /*
+        * Filter out candidates for the the final in-memory closest pair
+        */
         start2 = System.currentTimeMillis();
         logger.info("Calculating closestpairs individual partitions.");
         partitionedPointsRDD = partitionedPointsRDD.mapValues(new Function<Iterable<Point>, Iterable<Point>>() {
@@ -169,9 +167,9 @@ public class ClosestPair {
                 + "of" + " partitions: " + partitionedPointsRDD.count() + " " +
                 "in " + "" + (System.currentTimeMillis() - start2) + "ms");
 
-    /*
-     * Calculate closest pairs from filtered candidates
-     */
+        /*
+        * Calculate closest pairs from filtered candidates
+        */
         start2 = System.currentTimeMillis();
         logger.info("Calculating closest pairs from candidates.");
         JavaRDD<Iterable<Point>> values = partitionedPointsRDD.values();
@@ -193,6 +191,8 @@ public class ClosestPair {
         logger.info("Point 1: " + closestPair.first);
         logger.info("Point 2: " + closestPair.second);
         logger.info("Distance: " + closestPair.distance);
+        logger.info("Writing output to: " + outputFile);
+        FileIOUtil.writeDistancePointPairArrayToFile(closestPair, outputFile);
         logger.info("Total time taken: " + (System.currentTimeMillis() -
                 start) + "ms");
         sc.close();
