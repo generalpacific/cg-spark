@@ -59,20 +59,21 @@ public class ClosestPair {
         logger.info("DONE Creating JavaRDD from file : " + inputFile);
 
         if (isLocal) {
+            logger.info("[LOCAL] Calculating Closest pair locally");
             Point[] pointsArray = Util.listToArray(pointsData.toArray());
             Arrays.sort(pointsArray, new XCoordinateComparator());
             // calculate closestPair.
             DistancePointPair closestPair = ClosestPairLocal.closestPair
                     (pointsArray);
-            logger.info("Saving closestpair to: " + outputFile);
+            logger.info("[LOCAL] Saving closestpair to: " + outputFile);
             FileIOUtil.writeDistancePointPairArrayToFile(closestPair,
                     outputFile);
-            logger.info("Closest pair: ");
-            logger.info("Point 1: " + closestPair.first);
-            logger.info("Point 2: " + closestPair.second);
-            logger.info("Distance: " + closestPair.distance);
-            logger.info("DONE Saving closestpair to output.txt");
-            logger.info("Total time taken: " + (System.currentTimeMillis() -
+            logger.info("[LOCAL] Closest pair: ");
+            logger.info("[LOCAL] Point 1: " + closestPair.first);
+            logger.info("[LOCAL] Point 2: " + closestPair.second);
+            logger.info("[LOCAL] Distance: " + closestPair.distance);
+            logger.info("[LOCAL] DONE Saving closestpair to output.txt");
+            logger.info("[LOCAL] Total time taken: " + (System.currentTimeMillis() -
                     start) + "ms");
             return;
         }
